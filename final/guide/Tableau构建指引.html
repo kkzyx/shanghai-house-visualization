@@ -1,0 +1,532 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<title>Tableau 构建指引 · v2 / v3 数据</title><style>*{margin:0;padding:0;box-sizing:border-box}
+body{background:#080e17;color:#c9d8e8;font-family:"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.75;padding-bottom:60px}
+.hd{padding:22px 30px;background:linear-gradient(90deg,#0b1a2b,#12263d 50%,#0b1a2b);border-bottom:2px solid #1d3a58}
+.hd h1{font-size:24px;color:#e8f4ff;font-weight:600}
+.hd p{font-size:13px;color:#5d7d9e;margin-top:7px}
+.toc{display:flex;gap:9px;flex-wrap:wrap;padding:13px 30px;background:#0b1826;border-bottom:1px solid #14283c;position:sticky;top:0;z-index:50}
+.toc a{color:#8fb8d8;text-decoration:none;font-size:12.5px;border:1px solid #1c3550;padding:5px 12px;border-radius:6px;background:#0f2033}
+.toc a:hover{color:#5fd3ff;border-color:#3d9fe0;background:#16304a}
+.sec{padding:26px 30px 0;max-width:1520px;margin:0 auto}
+.sec h2{font-size:21px;color:#5fd3ff;font-weight:600;margin-bottom:8px;padding-left:12px;border-left:4px solid #2f9ee0;scroll-margin-top:70px}
+.sec h3{font-size:16px;color:#e8f4ff;font-weight:600;margin:24px 0 9px;padding-bottom:6px;border-bottom:1px solid #1c3550}
+.sec h4{font-size:14px;color:#8fb8d8;font-weight:600;margin:16px 0 7px}
+p{font-size:13.5px;color:#a8c4dc;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin:11px 0}
+th{background:#0f2033;color:#8fb8d8;padding:8px 10px;text-align:left;font-weight:600;border-bottom:1px solid #1c3550}
+td{padding:7px 10px;border-bottom:1px solid #12253a;color:#a8c4dc;vertical-align:top}
+tr:hover td{background:#0d1c2b}
+code{background:#12253a;color:#7fd6ff;padding:1px 5px;border-radius:4px;font-size:12px;font-family:"SF Mono",Menlo,Consolas,monospace}
+pre{background:#0a1521;border:1px solid #1b3247;border-left:3px solid #2f9ee0;border-radius:7px;padding:12px 15px;font-size:12.5px;color:#9fd0ee;line-height:1.75;overflow-x:auto;margin:10px 0;font-family:"SF Mono",Menlo,Consolas,monospace;white-space:pre}
+pre code{background:none;padding:0;color:inherit}
+.tip{background:#0d2137;border-left:3px solid #4ade80;border-radius:6px;padding:11px 15px;margin:11px 0;font-size:13px}
+.warn{background:#2a1a10;border-left:3px solid #ff8a5c;border-radius:6px;padding:11px 15px;margin:11px 0;font-size:13px}
+.danger{background:#2a1216;border-left:3px solid #f87171;border-radius:6px;padding:11px 15px;margin:11px 0;font-size:13px}
+.tip b,.warn b,.danger b{color:#fff}
+.hero{border:1px solid #1b3247;border-radius:10px;overflow:hidden;margin:13px 0}
+.hero img{width:100%;display:block;cursor:zoom-in}
+.hero img:hover{opacity:.92}
+.cap{font-size:12px;color:#5d7d9e;padding:9px 14px;border-top:1px solid #14283c;background:#0b1826}
+.zoom{position:fixed;inset:0;background:rgba(4,10,18,.97);z-index:999;display:none;cursor:zoom-out;padding:20px;overflow:auto}
+.zoom img{max-width:100%;display:block;margin:0 auto}
+.ft{padding:30px;max-width:1520px;margin:30px auto 0;font-size:12px;color:#4a6a88;line-height:1.9;border-top:1px solid #14283c}</style></head><body>
+<div class="hd"><h1>Tableau 构建指引 · 基于 v2 / v3 数据文件</h1>
+<p>字段溯源 + 两种使用方式对照 + 三个 Dashboard 逐图步骤 + 数据验证证据 &nbsp;|&nbsp; 点击原型截图可放大（Esc 关闭）</p></div>
+<div class="toc">
+<a href="#s0">§0 文件夹结构</a><a href="#s1">§1 字段溯源</a><a href="#s2">§2 两种方式</a>
+<a href="#s3">§3 D1 总体预览</a><a href="#s4">§4 D2 年鉴散点</a><a href="#s5">§5 D3 加权推荐</a>
+<a href="#s6">§6 验证证据</a><a href="#s7">§7 常见坑</a><a href="#s8">§8 Python 片段</a><a href="#s9">§9 交付清单</a>
+</div>
+<div class="sec" id="s0"><h2>§0 两个数据文件夹的结构</h2>
+<p>你现在项目里的数据放在 <code>project/dataset/</code> 下，共两个子文件夹：</p>
+<table><thead><tr><th>文件夹</th><th>文件</th><th>规模</th><th>定位</th></tr></thead><tbody>
+<tr><td><b><code>v2/</code></b>（我清洗的安居客全量）</td><td><code>01_房源级.csv</code></td><td><b>171,344 行 × 48 列</b></td><td>主表，D1 与 D2 的价格来源</td></tr>
+<tr><td></td><td><code>02_小区级.csv</code></td><td>13,543 行 × 55 列</td><td>小区聚合 + 年鉴指标</td></tr>
+<tr><td></td><td><code>03_区级.csv</code></td><td>16 行 × 50 列</td><td>区级聚合 + 全部 40 个年鉴字段</td></tr>
+<tr><td></td><td><code>README.md</code> / <code>字段字典.md</code></td><td>—</td><td>我写的说明文档</td></tr>
+<tr><td><b><code>v3/</code></b>（你的交集版）</td><td><code>01_房源子集_旧表小区.csv</code></td><td>35,569 行 × 54 列</td><td>D3 房源明细（含 500m 设施）</td></tr>
+<tr><td></td><td><code>02小区总表_安居客重算.csv</code></td><td>1,467 行 × 50 列</td><td>D3 打分与排名（一行一个小区）</td></tr>
+<tr><td></td><td><code>03_区表_年鉴口径_district.csv</code></td><td>16 行 × 41 列</td><td>区级年鉴（备用）</td></tr>
+<tr><td><b><code>tableau_ready/</code></b>（预计算辅助表）</td><td>5 张 CSV + README + 2 张图解</td><td>见 §2</td><td><b>方式 B 专用</b>，省去 Tableau 里的复杂公式</td></tr>
+</tbody></table>
+<div class="warn"><b>关于行数的一个坑</b>：<code>v2/01_房源级.csv</code> 用 <code>wc -l</code> 会数出 <b>171,499 行</b>，但 pandas 读出来是 <b>171,344 行</b>。差 155 行是因为 <code>标题</code> 字段里有 155 个嵌入换行符。<b>以 171,344 行为准</b>（Tableau 也会正确读成 171,344）。</div>
+</div>
+<div class="sec" id="s1"><h2>§1 数据血缘：从哪来，怎么处理，有没有编造</h2>
+<h3>1.1 三层血缘图</h3>
+<pre>house_price_raw.csv          175,135 行 × 47 列     抓取时间 2024-07-15
+   │                          （Downloads/archive (2) 与 (4)，md5 完全一致）
+   │
+   │  我做的处理：① 筛选  ② 单位解析  ③ 派生新列
+   │  ① 物业类型 ∈ {普通住宅,别墅,公寓,商住楼}
+   │  ② 单价 ∈ [5000,300000]、面积 &gt; 0
+   │  → 剔除 889 行（0.5%）
+   ▼
+v2/01_房源级.csv             171,344 行 × 48 列
+   │                          ✅ 每一行都能在 raw 中找到对应（已实测）
+   │
+   │  筛选：1471 → 1467 个小区（v2 ∩ 旧 final_tables_v2）
+   │        每个小区的房源【全部保留，无二次抽样】
+   ▼
+v3/01_房源子集.csv            35,569 行 × 54 列   = v2 的 20.4%
+                              ✅ 严格子集（已实测）</pre>
+<h3>1.2 字段溯源总览（48 个字段）</h3>
+<table><thead><tr><th>来源</th><th>我的处理</th><th>字段数</th><th>含义</th></tr></thead><tbody>
+<tr><td>🟦 <b>安居客原始抓取</b></td><td>直接搬运</td><td><b>15</b></td><td>raw 里原样就有，我连列名都没改</td></tr>
+<tr><td>🟦 <b>安居客原始抓取</b></td><td>去单位 / 提标签 / 正则提取</td><td><b>15</b></td><td><b>值来自 raw</b>，我只是把 <code>"28445元/㎡"</code> 变成 <code>28445</code></td></tr>
+<tr><td>🟨 <b>我新派生</b></td><td>—</td><td><b>8</b></td><td>用已有字段算出来的新列</td></tr>
+<tr><td>🟩 <b>上一版 geocode 流程</b></td><td>直接搬运</td><td><b>3</b></td><td>经纬度与质量分级（与 v3 逐行一致，差 0 米）</td></tr>
+<tr><td>🟪 <b>2024 上海统计年鉴</b></td><td>直接搬运</td><td><b>7</b></td><td>区级常量，每区 1 个值</td></tr>
+</tbody></table>
+<div class="tip"><b>关键说明</b>：48 个字段里 <b>30 个（62.5%）直接来自安居客原始抓取</b>（其中 15 个只是去掉了单位），<b>8 个是我用已有字段算出来的</b>，<b>3 个来自上一版 geocode</b>，<b>7 个来自公开年鉴</b>。<b>没有任何一个字段是凭空捏造的。</b></div>
+<h3>1.3 逐字段溯源表</h3>
+<table><thead><tr><th>#</th><th>字段</th><th>来源</th><th>我的处理</th><th>非空率</th><th>取值</th></tr></thead><tbody>
+<tr><td>1</td><td><code>区</code></td><td>🟦 安居客原始抓取</td><td>直接搬运</td><td>100.0%</td><td>16 个取值</td></tr>
+<tr><td>2</td><td><code>街道</code></td><td>🟦 安居客原始抓取</td><td>直接搬运</td><td>100.0%</td><td>303 个取值</td></tr>
+<tr><td>3</td><td><code>小区</code></td><td>🟦 安居客原始抓取</td><td>直接搬运</td><td>100.0%</td><td>13387 个取值</td></tr>
+<tr><td>4</td><td><code>区域</code></td><td>🟨 我新派生</td><td><b>我派生的新列</b></td><td>100.0%</td><td>2 个取值</td></tr>
+<tr><td>5</td><td><code>地址</code></td><td>🟦 安居客原始抓取</td><td>直接搬运</td><td>100.0%</td><td>12949 个取值</td></tr>
+<tr><td>6</td><td><code>价格_万元</code></td><td>🟦 安居客原始抓取</td><td>去单位 / 提标签 / 正则提取</td><td>100.0%</td><td>20 ~ 5.1e+04</td></tr>
+<tr><td>7</td><td><code>面积_平米</code></td><td>🟦 安居客原始抓取</td><td>去单位 / 提标签 / 正则提取</td><td>100.0%</td><td>8 ~ 1947</td></tr>
+<tr><td>8</td><td><code>单价_元每平</code></td><td>🟦 安居客原始抓取</td><td>去单位 / 提标签 / 正则提取</td><td>100.0%</td><td>5000 ~ 2.996e+05</td></tr>
+<tr><td>9</td><td><code>首付_万</code></td><td>🟦 安居客原始抓取</td><td>去单位 / 提标签 / 正则提取</td><td>100.0%</td><td>0 ~ 1.02e+04</td></tr>
+<tr><td>10</td><td><code>月供_元</code></td><td>🟦 安居客原始抓取</td><td>去单位 / 提标签 / 正则提取</td><td>100.0%</td><td>0 ~ 1.832e+06</td></tr>
+<tr><td>11</td><td><code>居室数</code></td><td>🟦 安居客原始抓取</td><td>直接搬运</td><td>100.0%</td><td>1 ~ 15</td></tr>
+<tr><td>12</td><td><code>厅堂数</code></td><td>🟦 安居客原始抓取</td><td>直接搬运</td><td>100.0%</td><td>0 ~ 12</td></tr>
+<tr><td>13</td><td><code>卫生间数</code></td><td>🟦 安居客原始抓取</td><td>直接搬运</td><td>100.0%</td><td>0 ~ 18</td></tr>
+<tr><td>14</td><td><code>户型</code></td><td>🟨 我新派生</td><td><b>我派生的新列</b></td><td>100.0%</td><td>309 个取值</td></tr>
+<tr><td>15</td><td><code>朝向</code></td><td>🟦 安居客原始抓取</td><td>直接搬运</td><td>100.0%</td><td>11 个取值</td></tr>
+<tr><td>16</td><td><code>装修</code></td><td>🟦 安居客原始抓取</td><td>直接搬运</td><td>100.0%</td><td>6 个取值</td></tr>
+<tr><td>17</td><td><code>楼层层级</code></td><td>🟨 我新派生</td><td><b>我派生的新列</b></td><td>88.5%</td><td>3 个取值</td></tr>
+<tr><td>18</td><td><code>总层数</code></td><td>🟨 我新派生</td><td><b>我派生的新列</b></td><td>99.5%</td><td>1 ~ 118</td></tr>
+<tr><td>19</td><td><code>建造年份</code></td><td>🟦 安居客原始抓取</td><td>去单位 / 提标签 / 正则提取</td><td>95.5%</td><td>1901 ~ 2024</td></tr>
+<tr><td>20</td><td><code>房龄</code></td><td>🟨 我新派生</td><td><b>我派生的新列</b></td><td>95.5%</td><td>0 ~ 102</td></tr>
+<tr><td>21</td><td><code>房龄段</code></td><td>🟨 我新派生</td><td><b>我派生的新列</b></td><td>95.5%</td><td>5 个取值</td></tr>
+<tr><td>22</td><td><code>面积段</code></td><td>🟨 我新派生</td><td><b>我派生的新列</b></td><td>100.0%</td><td>5 个取值</td></tr>
+<tr><td>23</td><td><code>物业类型</code></td><td>🟦 安居客原始抓取</td><td>直接搬运</td><td>100.0%</td><td>4 个取值</td></tr>
+<tr><td>24</td><td><code>产权性质</code></td><td>🟦 安居客原始抓取</td><td>直接搬运</td><td>100.0%</td><td>7 个取值</td></tr>
+<tr><td>25</td><td><code>产权年限</code></td><td>🟦 安居客原始抓取</td><td>直接搬运</td><td>100.0%</td><td>4 个取值</td></tr>
+<tr><td>26</td><td><code>房本年限</code></td><td>🟦 安居客原始抓取</td><td>直接搬运</td><td>100.0%</td><td>3 个取值</td></tr>
+<tr><td>27</td><td><code>有电梯</code></td><td>🟦 安居客原始抓取</td><td>去单位 / 提标签 / 正则提取</td><td>100.0%</td><td>2 个取值</td></tr>
+<tr><td>28</td><td><code>近地铁</code></td><td>🟦 安居客原始抓取</td><td>去单位 / 提标签 / 正则提取</td><td>100.0%</td><td>2 个取值</td></tr>
+<tr><td>29</td><td><code>车位充足</code></td><td>🟦 安居客原始抓取</td><td>去单位 / 提标签 / 正则提取</td><td>100.0%</td><td>2 个取值</td></tr>
+<tr><td>30</td><td><code>户型方正</code></td><td>🟦 安居客原始抓取</td><td>去单位 / 提标签 / 正则提取</td><td>100.0%</td><td>2 个取值</td></tr>
+<tr><td>31</td><td><code>多人关注</code></td><td>🟦 安居客原始抓取</td><td>去单位 / 提标签 / 正则提取</td><td>100.0%</td><td>2 个取值</td></tr>
+<tr><td>32</td><td><code>小区均价_元每平</code></td><td>🟦 安居客原始抓取</td><td>去单位 / 提标签 / 正则提取</td><td>99.9%</td><td>6063 ~ 3.463e+05</td></tr>
+<tr><td>33</td><td><code>小区户数_户</code></td><td>🟦 安居客原始抓取</td><td>去单位 / 提标签 / 正则提取</td><td>98.8%</td><td>1 ~ 1.434e+04</td></tr>
+<tr><td>34</td><td><code>物业费用_元每平月</code></td><td>🟦 安居客原始抓取</td><td>去单位 / 提标签 / 正则提取</td><td>95.2%</td><td>0.08 ~ 22</td></tr>
+<tr><td>35</td><td><code>绿化率_百分比</code></td><td>🟦 安居客原始抓取</td><td>去单位 / 提标签 / 正则提取</td><td>98.4%</td><td>10 ~ 85</td></tr>
+<tr><td>36</td><td><code>经度</code></td><td>🟩 上一版 geocode 流程</td><td>直接搬运</td><td>100.0%</td><td>120.9 ~ 122</td></tr>
+<tr><td>37</td><td><code>纬度</code></td><td>🟩 上一版 geocode 流程</td><td>直接搬运</td><td>100.0%</td><td>30.71 ~ 31.83</td></tr>
+<tr><td>38</td><td><code>坐标质量</code></td><td>🟩 上一版 geocode 流程</td><td>直接搬运</td><td>100.0%</td><td>5 个取值</td></tr>
+<tr><td>39</td><td><code>到市中心距离_公里</code></td><td>🟨 我新派生</td><td><b>我派生的新列</b></td><td>100.0%</td><td>0.25 ~ 70.47</td></tr>
+<tr><td>40</td><td><code>人口密度_人每平方公里</code></td><td>🟪 2024 上海统计年鉴</td><td>直接搬运</td><td>100.0%</td><td>501 ~ 2.896e+04</td></tr>
+<tr><td>41</td><td><code>地均预算收入_万元每平方公里</code></td><td>🟪 2024 上海统计年鉴</td><td>直接搬运</td><td>100.0%</td><td>797.2 ~ 1.463e+05</td></tr>
+<tr><td>42</td><td><code>人均绿地_平方米</code></td><td>🟪 2024 上海统计年鉴</td><td>直接搬运</td><td>100.0%</td><td>6.7 ~ 697.8</td></tr>
+<tr><td>43</td><td><code>老龄化率_百分比</code></td><td>🟪 2024 上海统计年鉴</td><td>直接搬运</td><td>100.0%</td><td>31.4 ~ 45.3</td></tr>
+<tr><td>44</td><td><code>外来人口占比_百分比</code></td><td>🟪 2024 上海统计年鉴</td><td>直接搬运</td><td>100.0%</td><td>21 ~ 55.3</td></tr>
+<tr><td>45</td><td><code>每万人卫生技术人员_人</code></td><td>🟪 2024 上海统计年鉴</td><td>直接搬运</td><td>100.0%</td><td>49 ~ 620</td></tr>
+<tr><td>46</td><td><code>每万人中学在校生_人</code></td><td>🟪 2024 上海统计年鉴</td><td>直接搬运</td><td>100.0%</td><td>246 ~ 584</td></tr>
+<tr><td>47</td><td><code>标题</code></td><td>🟦 安居客原始抓取</td><td>直接搬运</td><td>100.0%</td><td>155903 个取值</td></tr>
+<tr><td>48</td><td><code>标题链接</code></td><td>🟦 安居客原始抓取</td><td>直接搬运</td><td>100.0%</td><td>162670 个取值</td></tr>
+</tbody></table>
+<h3>1.4 那 8 个「我派生」的字段，具体怎么来的</h3>
+<table><thead><tr><th>字段</th><th>我的算法</th><th>验证结果</th></tr></thead><tbody>
+<tr><td><code>区域</code></td><td>按区名映射：黄浦/徐汇/长宁/静安/普陀/虹口/杨浦 → 中心城区，其余 → 郊区</td><td>✅ 每个区只有 1 个值（16 区均已核对）</td></tr>
+<tr><td><code>户型</code></td><td>拼接 <code>居室数</code> + <code>厅堂数</code> + <code>卫生间数</code> → <code>3室2厅1卫</code></td><td>✅ 与拼接结果一致率 <b>100.00%</b></td></tr>
+<tr><td><code>楼层层级</code></td><td>拆分 raw 的 <code>楼层位置</code>：<code>中层(共11层)</code> → <code>中层</code></td><td>✅ 88.5% 可解析（raw 里 <code>共X层</code> 格式没有层级信息）</td></tr>
+<tr><td><code>总层数</code></td><td>拆分 raw 的 <code>楼层位置</code>：<code>中层(共11层)</code> → <code>11</code></td><td>✅ 99.5% 可解析</td></tr>
+<tr><td><code>房龄</code></td><td><code>2024 − 建造年份</code></td><td>✅ 两者都非空的 163,666 行，一致率 <b>100.00%</b></td></tr>
+<tr><td><code>房龄段</code></td><td>按房龄分箱：0-5 / 6-10 / 11-20 / 21-30 / 30年+</td><td>✅ 分箱逻辑可复核</td></tr>
+<tr><td><code>面积段</code></td><td>按面积分箱：&lt;50 / 50-90 / 90-140 / 140-300 / 300㎡+</td><td>✅ 分箱逻辑可复核</td></tr>
+<tr><td><code>到市中心距离_公里</code></td><td>等距圆柱近似：<code>√((经度−121.4737)×95)² + ((纬度−31.2304)×111)²</code></td><td>✅ 与 Haversine 大圆距离中位差 0.02 km、最大 0.13 km</td></tr>
+</tbody></table>
+<h3>1.5 ⚠️ 使用这两个字段前必须知道的事</h3>
+<div class="danger"><b><code>首付_万</code> / <code>月供_元</code> 与价格高度共线，不能和价格一起放进模型</b>&lt;br&gt;&lt;br&gt;· <code>首付_万</code> = 价格 × <b>20% 或 30%</b>（两档），与 <code>价格_万元</code> 的 Pearson ρ = <b>0.947</b>&lt;br&gt;· <code>月供_元</code> 与 <code>价格_万元</code> 的 Pearson ρ = <b>0.997</b>（几乎是价格的单调变换）&lt;br&gt;· 而且 20%/30% 的档位<b>完全由区决定</b>（中心城区=20%，外围=30%），所以「首付比例」本质上是个<b>地理标记</b>，不是购房者行为&lt;br&gt;&lt;br&gt;<b>它们可以用于展示</b>（「中位首付 87 万」对购房者比「中位总价 369 万」直观），<b>但不能当独立解释变量</b>。</div>
+<div class="tip"><b><code>到市中心距离_公里</code> 与上面相反 —— 可以用</b>&lt;br&gt;&lt;br&gt;判断原则：<b>派生自「自变量」的字段可以用；派生自「因变量」的字段不能用</b>。&lt;br&gt;· <code>到市中心距离</code> 派生自 <b>坐标</b>（解释房价的输入）→ ✅ 合法空间变量，与单价 ρ = <b>−0.705</b>&lt;br&gt;· <code>首付</code> 派生自 <b>价格</b>（我们想解释的结果）→ ❌ 等于「用价格解释价格」&lt;br&gt;&lt;br&gt;<b>注意</b>：<code>到市中心距离</code> 是 <code>(经度, 纬度)</code> 的确定性函数，三者不要同时放进一个模型。</div>
+</div>
+<div class="sec" id="s2"><h2>§2 两种使用方式：用原始表 还是 用预计算表</h2>
+<p>同样的三个 Dashboard，有两条技术路线。<b>两条都能做出来，选一条即可，不要混着做。</b></p>
+<h3>2.1 两种方式的差异</h3>
+<table><thead><tr><th></th><th><b>方式 A · 用 v2/ + v3/</b></th><th><b>方式 B · 用 tableau_ready/</b></th></tr></thead><tbody>
+<tr><td>数据源</td><td>只用 <code>v2/</code> 与 <code>v3/</code> 里的表</td><td>额外用 <code>tableau_ready/</code> 的 5 张预计算表</td></tr>
+<tr><td>Tableau 里的工作量</td><td><b>大</b> —— 网格、分位、相关系数、区内分化都要自己写计算字段</td><td><b>小</b> —— 大部分图「连表 + 拖字段」就能出</td></tr>
+<tr><td>公式复杂度</td><td>需要写 LOD 表达式、<code>WINDOW_PERCENTILE</code> 等</td><td>基本不用写复杂公式</td></tr>
+<tr><td>数值与原型的一致性</td><td>会有小差异（Pearson vs Spearman、箱形图须线定义）</td><td><b>完全一致</b>（数值已预先算好）</td></tr>
+<tr><td>可解释性 / 答辩</td><td>✅ <b>能讲清每一步怎么算的</b></td><td>⚠️ 需要额外解释「这些表怎么来的」</td></tr>
+<tr><td>适合</td><td>想让老师看到你自己动手算</td><td>想快速出可视化、把时间花在设计上</td></tr>
+</tbody></table>
+<div class="tip"><b>我的建议</b>：<b>用方式 B 搭图，用方式 A 理解原理</b>。答辩时若被问「这个相关系数怎么来的」，你需要能说出方式 A 的算法。</div>
+<h3>2.2 每个图，两种方式怎么做</h3>
+<table><thead><tr><th>Dashboard</th><th>图</th><th>方式 A（原始表）</th><th>方式 B（预计算表）</th></tr></thead><tbody>
+<tr><td><b>D1</b></td><td>① 热力地图</td><td>建 <code>网格经度/纬度</code> 计算字段（含余弦修正）</td><td>连 <code>05_网格热力.csv</code> 直接画</td></tr>
+<tr><td><b>D1</b></td><td>② 箱形图</td><td>用 Tableau 内置盒须图，或 <code>WINDOW_PERCENTILE</code> 自建</td><td>连 <code>06_箱形图分位.csv</code> 画甘特条</td></tr>
+<tr><td><b>D1</b></td><td>③ 单价分布</td><td>右键建数据桶（5000）</td><td>同 A（这个本来就简单）</td></tr>
+<tr><td><b>D1</b></td><td>④ 区级对比</td><td>直接拖字段</td><td>同 A</td></tr>
+<tr><td><b>D1</b></td><td>⑤ 朝向构成</td><td>直接拖字段</td><td>同 A</td></tr>
+<tr><td><b>D1</b></td><td>⑥ 房龄 vs 单价</td><td>直接拖字段 + 手动排序</td><td>同 A</td></tr>
+<tr><td><b>D1</b></td><td>⑦ 面积段 vs 单价</td><td>直接拖字段 + 手动排序</td><td>同 A</td></tr>
+<tr><td><b>D1</b></td><td>⑧ 户型双轴</td><td>直接拖字段</td><td>同 A</td></tr>
+<tr><td><b>D2</b></td><td>① 可切换散点</td><td>建参数 + <code>CASE</code> 计算字段</td><td>同 A（参数还是要在 Tableau 里建）</td></tr>
+<tr><td><b>D2</b></td><td>② 相关性排行</td><td><code>WINDOW_CORR</code>（Pearson）或透视表</td><td>连 <code>04_相关系数表.csv</code></td></tr>
+<tr><td><b>D2</b></td><td>③ 数量 vs 人均</td><td>同上</td><td>连 <code>04_相关系数表.csv</code></td></tr>
+<tr><td><b>D2</b></td><td>④ 地均预算收入散点</td><td>直接拖字段</td><td>同 A</td></tr>
+<tr><td><b>D2</b></td><td>⑤ 人均绿地散点</td><td>直接拖字段</td><td>同 A</td></tr>
+<tr><td><b>D2</b></td><td>⑥ 人均绿地 vs 区内分化</td><td>在房源级上算 <code>PERCENTILE</code></td><td>连 <code>07_区内分化.csv</code></td></tr>
+<tr><td><b>D3</b></td><td>全部</td><td>用 <code>v3/02小区总表</code>（列名是 <code>Latitude</code>/<code>Longitude</code>）</td><td>连 <code>08_D3小区级_打分用.csv</code>（列名已标准化）</td></tr>
+</tbody></table>
+<h3>2.3 tableau_ready/ 里有什么</h3>
+<table><thead><tr><th>文件</th><th>规模</th><th>用于</th><th>省掉的工作</th></tr></thead><tbody>
+<tr><td><code>04_相关系数表.csv</code></td><td>8 × 7</td><td>D2 ②③</td><td>Tableau 算不了 Spearman（内置是 Pearson）</td></tr>
+<tr><td><code>05_网格热力.csv</code></td><td>1,055 × 5</td><td>D1 ①</td><td>网格计算字段 + 经纬度余弦修正</td></tr>
+<tr><td><code>06_箱形图分位.csv</code></td><td>16 × 13</td><td>D1 ②</td><td><code>WINDOW_PERCENTILE</code> + 甘特条长度计算</td></tr>
+<tr><td><code>07_区内分化.csv</code></td><td>16 × 7</td><td>D2 ⑥</td><td>在 17 万行房源级上算 IQR 再聚合</td></tr>
+<tr><td><code>08_D3小区级_打分用.csv</code></td><td>1,467 × 21</td><td>D3 全部</td><td>列名标准化（<code>Longitude</code>→<code>经度</code>）</td></tr>
+</tbody></table>
+<div class="tip"><code>04</code> / <code>06</code> / <code>07</code> 是<b>区级</b>（16 行），与房源级关联时<b>必须用「关系（Relationship）」而不是「联接（Join）」</b>；<code>05</code> 是网格级、<code>08</code> 是小区级，都独立使用。</div>
+</div>
+<div class="sec" id="s3"><h2>§3 Dashboard 1 · 上海房价总体预览</h2>
+<p><b>数据源</b>：<code>v2/01_房源级.csv</code>（171,344 × 48）· <b>共 8 个组件</b></p>
+<div class="hero"><img src="img/D1_原型.png" alt="Dashboard 1 原型截图 · ① 热力地图 + ④ 区级对比（上）→ ② 行政区箱形图（中）→ ③⑥⑦（下）→ ⑧⑤（底）"><div class="cap">Dashboard 1 原型截图 · ① 热力地图 + ④ 区级对比（上）→ ② 行政区箱形图（中）→ ③⑥⑦（下）→ ⑧⑤（底）</div></div>
+<h3>① 房价热力地图（1.5 km 网格）</h3>
+<h4>方式 B（推荐 · 省事）</h4>
+<pre>1. 数据源连 tableau_ready/05_网格热力.csv（1,055 行，已聚合）
+2. 列：[网格经度] → 右键设为「维度 + 连续」（绿色）
+3. 行：[网格纬度] → 同样设为「维度 + 连续」
+4. 标记类型：方形
+5. 颜色：[中位单价]
+6. 大小：拉到最大
+7. 地图 → 地图层 → 背景地图 = 无</pre>
+<h4>方式 A（自己建网格）</h4>
+<pre>[网格经度] = ROUND([经度] / 0.015753) * 0.015753
+[网格纬度] = ROUND([纬度] / 0.013562) * 0.013562
+
+筛选器：COUNT([单价_元每平]) &gt;= 3</pre>
+<p><b>这两个数怎么来的</b>：上海纬度 31.2°N 上，1° 经度 ≈ 95.2 km、1° 纬度 ≈ 110.6 km。要 1.5 km 的方格：经度步长 = 1.5/95.2 = <b>0.015753</b>，纬度步长 = 1.5/110.6 = <b>0.013562</b>。</p>
+<div class="warn"><b>经度必须做余弦修正</b>。地球是球体，经线越靠近两极越密 —— 1° 经度只有 1° 纬度的 <b>86.1%</b>。若两个方向用同一步长，格子会被拉成竖长条（高 16.9%）。</div>
+<div class="danger"><b>这一步最容易错的三个地方</b>&lt;br&gt;1. <b>胶囊必须是「维度 + 连续」</b>（绿色）。若是蓝色离散，Tableau 会把 68 个经度值 × 78 个纬度值做成 <b>5,304 格的矩阵</b>，界面全是标题&lt;br&gt;2. <b>大小必须拉满</b>，否则方格之间有缝隙&lt;br&gt;3. <b>颜色用 <code>MEDIAN</code> 不是 <code>SUM</code></b> —— 一格内可能几百条挂牌，求和就变成「挂牌量图」了</div>
+<h3>② 行政区房价箱形图</h3>
+<h4>方式 B（须线与原型一致）</h4>
+<pre>1. 数据源连 tableau_ready/06_箱形图分位.csv（16 行）
+2. 列：[区]（按 P50 降序）
+3. 行：[箱体下沿]
+4. 标记：甘特条形图
+5. 大小：[箱体高度]
+6. 再叠一层细甘特条画上须/下须（用 [下须长度] / [上须长度]）</pre>
+<h4>方式 A（Tableau 内置）</h4>
+<pre>列：区（排序：按 MEDIAN([单价_元每平]) 降序）
+行：单价_元每平
+分析 → 盒须图 → 拖到画布</pre>
+<div class="warn"><b>须线定义不同</b>：原型用的是 <b>P5 / P95</b>，Tableau 内置盒须图默认是 <b>1.5 × IQR</b>。用方式 A 要在报告里注明。</div>
+<h3>③ 单价分布柱状图</h3>
+<pre>1. 右键 [单价_元每平] → 创建 → 数据桶 → 大小 5000
+2. 列：[单价（桶）]（连续）
+3. 行：COUNT([单价_元每平])
+4. 标记：条形</pre>
+<p>桶大小 5,000 对应原型的 28 档（15k ~ 155k）。</p>
+<h3>④ 区级中位单价对比</h3>
+<pre>列：区（排序：按 MEDIAN([单价_元每平]) 降序）
+行：MEDIAN([单价_元每平])
+标记：条形 + 显示标签</pre>
+<h3>⑤ 朝向构成</h3>
+<pre>标记类型：饼图
+颜色：朝向
+角度：COUNT([单价_元每平])
+标签：类别 + 百分比
+筛选器：朝向 → 保留 Top 8（按计数）</pre>
+<h3>⑥ 房龄 vs 单价</h3>
+<pre>列：房龄段
+行：MEDIAN([单价_元每平])
+标记：条形 + 标签
+排序：右键 [房龄段] → 排序 → 手动 → 0-5年/6-10年/11-20年/21-30年/30年+</pre>
+<div class="tip">文本字段默认按拼音排会乱序。更稳的做法是建数值排序字段：&lt;br&gt;<code>[房龄段序号] = CASE [房龄段] WHEN '0-5年' THEN 1 WHEN '6-10年' THEN 2 … END</code>，然后 <code>列=房龄段序号</code>（连续）+ <code>标签=房龄段</code>。</div>
+<h3>⑦ 面积段 vs 单价</h3>
+<pre>列：面积段（手动排序：&lt;50㎡ / 50-90㎡ / 90-140㎡ / 140-300㎡ / 300㎡+）
+行：MEDIAN([单价_元每平])
+标记：条形 + 标签</pre>
+<h3>⑧ 户型：挂牌量 vs 单价（双轴图）</h3>
+<pre>1. 列：户型（筛选 Top 12，按计数）
+2. 行：COUNT([单价_元每平])     ← 第 1 个
+3. 行：MEDIAN([单价_元每平])    ← 第 2 个
+4. 右键第 2 个行胶囊 → 双轴
+5. 右键右轴 → 同步轴（取消勾选！）
+6. 第 1 个标记改「条形」，第 2 个改「线」</pre>
+<div class="danger"><b>不要勾「同步轴」</b> —— 两个指标量级差 10 倍（计数 vs 价格），同步后单价线会被压成一条直线。</div>
+</div>
+<div class="sec" id="s4"><h2>§4 Dashboard 2 · 房价与年鉴指标</h2>
+<p><b>数据源</b>：<code>v2/03_区级.csv</code>（16 行 × 50 列，含全部 40 个年鉴字段）· <b>共 7 个组件</b></p>
+<div class="hero"><img src="img/D2_原型.png" alt="Dashboard 2 原型截图 · 左上大散点（下拉切换指标）+ 右上相关性排行 → 中排「数量 vs 人均」悖论 → 下排两张散点 + 数据表"><div class="cap">Dashboard 2 原型截图 · 左上大散点（下拉切换指标）+ 右上相关性排行 → 中排「数量 vs 人均」悖论 → 下排两张散点 + 数据表</div></div>
+<h3>选中的 8 个年鉴指标</h3>
+<table><thead><tr><th>指标字段名</th><th>维度</th><th>ρ vs 房价</th><th>稳健</th></tr></thead><tbody>
+<tr><td><code>地均预算收入_万元每平方公里</code></td><td>经济财政</td><td><b>+0.976</b></td><td>✅</td></tr>
+<tr><td><code>人均绿地_平方米</code></td><td>环境</td><td><b>−0.924</b></td><td>✅</td></tr>
+<tr><td><code>人口密度_人每平方公里</code></td><td>人口</td><td><b>+0.918</b></td><td>✅</td></tr>
+<tr><td><code>每万人中学在校生_人</code></td><td>教育 · 人均</td><td>+0.847</td><td>✅</td></tr>
+<tr><td><code>人均居住房屋_平方米</code></td><td>住房供给</td><td>+0.721</td><td>—</td></tr>
+<tr><td><code>每万人卫生技术人员_人</code></td><td>医疗 · 人均</td><td>+0.715</td><td>—</td></tr>
+<tr><td><code>普通中学_所</code></td><td>教育 · 数量</td><td>−0.121</td><td>—</td></tr>
+<tr><td><code>卫生机构_个</code></td><td>医疗 · 数量</td><td>+0.000</td><td>—</td></tr>
+</tbody></table>
+<div class="warn"><b>统计警示</b>：只有 <b>16 个区</b>，却从 38 个年鉴指标里挑选。经 Bonferroni 校正后（临界 |ρ| ≈ 0.79），<b>只有前 4 个稳健</b>。|ρ| &lt; 0.5 的指标（普通中学所数、卫生机构个数）<b>不可单独作为发现写进报告</b>。</div>
+<h3>① 区中位单价 vs 年鉴指标（可切换散点）</h3>
+<pre>Step 1 · 建参数
+  参数名：[选择指标]　数据类型：字符串　允许的值：列表
+  填入 8 个指标名
+
+Step 2 · 建计算字段
+  [指标值] = CASE [选择指标]
+    WHEN &#x27;地均预算收入&#x27; THEN [地均预算收入_万元每平方公里]
+    WHEN &#x27;人均绿地&#x27;     THEN [人均绿地_平方米]
+    … 共 8 行 …
+  END
+
+Step 3 · 拖拽
+  列：[指标值]（连续）
+  行：[中位单价]
+  详细信息：区　标签：区　标记：圆
+  大小：8 + SQRT([房源数]) / 12
+  分析 → 趋势线 → 线性
+
+Step 4 · 右键 [选择指标] 参数 → 显示参数控件
+
+Step 5 · 地均预算收入 / 人均绿地 / 人口密度 建议用对数轴
+  右键 X 轴 → 编辑轴 → 刻度 = 对数</pre>
+<h3>② 年鉴指标相关性排行</h3>
+<p><b>方式 B（推荐）</b>：直接连 <code>tableau_ready/04_相关系数表.csv</code></p>
+<pre>列：[相关系数_房价] 和 [相关系数_分化]（两个度量并排）
+行：[指标名]（按 |相关系数_房价| 降序）
+标记：条形（分组）
+颜色：可用 [稳健] 列区分</pre>
+<p><b>方式 A</b>：Tableau 内置 <code>CORR()</code> / <code>WINDOW_CORR()</code> 算的是 <b>Pearson</b>，不是 Spearman。两种做法：</p>
+<table><thead><tr><th>做法</th><th>公式 / 步骤</th><th>说明</th></tr></thead><tbody>
+<tr><td>透视 + WINDOW_CORR</td><td>数据源页面选中 8 个年鉴字段 → 右键 → <b>透视</b>&lt;br&gt;行=<code>[透视字段名称]</code>，详细信息=<code>区</code>&lt;br&gt;文本=<code>WINDOW_CORR([透视字段值],[中位单价])</code>，表计算依据=区</td><td><code>WINDOW_CORR</code> 在每个「透视字段名称」分区内、跨 16 个区计算</td></tr>
+<tr><td>预先算好导入</td><td>见 §6 的 Python 片段，跑出结果粘进 Tableau</td><td>数值与原型完全一致</td></tr>
+</tbody></table>
+<h3>③ 「数量 vs 人均」悖论（核心图）</h3>
+<table><thead><tr><th>维度</th><th>绝对数量 ρ</th><th>人均 / 密度 ρ</th></tr></thead><tbody>
+<tr><td><b>医疗</b></td><td><code>卫生机构_个</code> <b>+0.000</b></td><td><code>每万人卫生技术人员_人</code> <b>+0.715</b></td></tr>
+<tr><td><b>教育</b></td><td><code>普通中学_所</code> <b>−0.121</b></td><td><code>每万人中学在校生_人</code> <b>+0.847</b></td></tr>
+</tbody></table>
+<p><b>这张图讲的是</b>：数「医院个数」与房价零相关，但数「每万人医护人员」是强正相关 —— 说明<b>绝对数量不含信息，除以人口后才显现关系</b>。</p>
+<pre>方式 B：直接用 04_相关系数表.csv 的对应行，按「维度」和「类型」分组画分组条形图
+
+方式 A：用 §4② 的透视表，加两个分组字段
+  [维度] = IF [透视字段名称] IN (&#x27;卫生机构_个&#x27;,&#x27;每万人卫生技术人员_人&#x27;) THEN &#x27;医疗&#x27;
+      ELSEIF [透视字段名称] IN (&#x27;普通中学_所&#x27;,&#x27;每万人中学在校生_人&#x27;) THEN &#x27;教育&#x27; END
+  [类型] = IF [透视字段名称] IN (&#x27;卫生机构_个&#x27;,&#x27;普通中学_所&#x27;) THEN &#x27;绝对数量&#x27; ELSE &#x27;人均 / 密度&#x27; END</pre>
+<h3>④⑤⑥ 三张散点图</h3>
+<table><thead><tr><th>图</th><th>列（X）</th><th>行（Y）</th><th>ρ</th><th>数据源</th></tr></thead><tbody>
+<tr><td>④ 地均预算收入</td><td><code>地均预算收入_万元每平方公里</code>（对数轴）</td><td><code>中位单价</code></td><td>+0.976</td><td>方式 A/B 同</td></tr>
+<tr><td>⑤ 人均绿地</td><td><code>人均绿地_平方米</code>（对数轴）</td><td><code>中位单价</code></td><td>−0.924</td><td>方式 A/B 同</td></tr>
+<tr><td>⑥ 人均绿地 vs 区内分化</td><td><code>人均绿地_平方米</code>（对数轴）</td><td><code>[区内分化]</code></td><td>+0.685</td><td><b>方式 B 用 <code>07_区内分化.csv</code></b></td></tr>
+</tbody></table>
+<h4>方式 A 怎么算「区内分化」</h4>
+<pre>[区内分化] = (PERCENTILE([单价_元每平], 0.75) - PERCENTILE([单价_元每平], 0.25))
+            / MEDIAN([单价_元每平]) * 100
+
+行：区　文本：[区内分化]　→ 得到 16 行结果</pre>
+<h3>⑦ 区级数据表</h3>
+<pre>行：区（按中位单价降序）
+文本：中位单价 / 房源数 / 中位房龄 / 中位面积 / 区内分化
+筛选器：度量名称 → 只保留这 5 个</pre>
+</div>
+<div class="sec" id="s5"><h2>§5 Dashboard 3 · 小区加权推荐</h2>
+<p><b>数据源</b>：方式 B 用 <code>tableau_ready/08_D3小区级_打分用.csv</code>（1,467 × 21）；方式 A 用 <code>v3/02小区总表_安居客重算.csv</code>（1,467 × 50）。房源明细用 <code>v3/01_房源子集_旧表小区.csv</code>。</p>
+<div class="hero"><img src="img/D3_原型.png" alt="Dashboard 3 原型截图 · 顶部区域选择 + 三个权重滑块 → 左侧得分地图 + 右侧推荐排名表 → 下方房源明细（点击排名行后展开）"><div class="cap">Dashboard 3 原型截图 · 顶部区域选择 + 三个权重滑块 → 左侧得分地图 + 右侧推荐排名表 → 下方房源明细（点击排名行后展开）</div></div>
+<div class="danger"><b>粒度是这一页成败的关键</b>&lt;br&gt;必须用<b>小区级表</b>（1,467 行，一行一个小区）。若误用<b>房源级表</b>（35,569 行），排名表里同一个小区会出现几十行，评分也会算错。</div>
+<h3>⚠️ 方式 A 的字段名与方式 B 不同</h3>
+<table><thead><tr><th>用途</th><th>方式 A：<code>v3/02小区总表</code></th><th>方式 B：<code>08_D3小区级_打分用.csv</code></th></tr></thead><tbody>
+<tr><td>经纬度</td><td><b><code>Latitude</code></b> / <b><code>Longitude</code></b>（英文）</td><td><b><code>经度</code></b> / <b><code>纬度</code></b>（已改名）</td></tr>
+<tr><td>单价</td><td><b><code>中位单价_元每平</code></b></td><td><b><code>中位单价</code></b>（已改名）</td></tr>
+<tr><td>教育 / 医疗 / 交通</td><td><code>学校_500米</code> / <code>医院_500米</code> / <code>步行时间_分钟</code></td><td>同左</td></tr>
+</tbody></table>
+<p><b>方式 A 先做两件事</b>：① 右键 <code>Latitude</code> → 地理角色 → 纬度；<code>Longitude</code> → 经度。② 建议重命名成中文列名。<b>方式 B 不用做</b>，列名已标准化。</p>
+<h3>Step 1 · 建三个权重参数</h3>
+<pre>参数名：[教育权重]　数据类型：整数　当前值：33
+允许的值：范围　最小值 0　最大值 100　步长 1
+→ 勾选「显示参数控件」→ 选「滑块」
+
+同样建 [医疗权重] = 33、[交通权重] = 34</pre>
+<h3>Step 2 · 区内 min-max 归一化（三个 LOD 计算字段）</h3>
+<pre>[教育分]
+IF { FIXED [区]: MAX([学校_500米]) } = { FIXED [区]: MIN([学校_500米]) } THEN 50
+ELSE
+  ([学校_500米] - { FIXED [区]: MIN([学校_500米]) })
+  / ({ FIXED [区]: MAX([学校_500米]) } - { FIXED [区]: MIN([学校_500米]) }) * 100
+END
+
+[医疗分]
+IF { FIXED [区]: MAX([医院_500米]) } = { FIXED [区]: MIN([医院_500米]) } THEN 50
+ELSE
+  ([医院_500米] - { FIXED [区]: MIN([医院_500米]) })
+  / ({ FIXED [区]: MAX([医院_500米]) } - { FIXED [区]: MIN([医院_500米]) }) * 100
+END
+
+[交通分]
+/* 步行时间越短越好 → 分子用 MAX 减，方向反过来 */
+IF { FIXED [区]: MAX([步行时间_分钟]) } = { FIXED [区]: MIN([步行时间_分钟]) } THEN 50
+ELSE
+  ({ FIXED [区]: MAX([步行时间_分钟]) } - [步行时间_分钟])
+  / ({ FIXED [区]: MAX([步行时间_分钟]) } - { FIXED [区]: MIN([步行时间_分钟]) }) * 100
+END</pre>
+<div class="danger"><b>🔴 三个必须做对的地方</b>&lt;br&gt;&lt;br&gt;<b>1. 必须是 <code>FIXED [区]</code>，不是 <code>FIXED [区],[小区]</code></b>&lt;br&gt;后者是在<b>小区内</b>做归一化，而一个小区只有一行数据 → <code>MAX = MIN</code> → 所有分数都返回 50，地图全一个颜色。&lt;br&gt;&lt;br&gt;<b>2. 除零保护必须有</b> —— 若某区所有小区的学校数相同，<code>MAX − MIN = 0</code>，会返回 <code>Inf</code> 或 <code>Null</code>。&lt;br&gt;&lt;br&gt;<b>3. <code>[交通分]</code> 的分子要反过来</b> —— 用 <code>MAX − 当前值</code>，因为步行时间<b>越短越好</b>。</div>
+<h3>Step 3 · 综合得分</h3>
+<pre>[综合得分]
+([教育分] * [教育权重] + [医疗分] * [医疗权重] + [交通分] * [交通权重])
+/ NULLIF([教育权重] + [医疗权重] + [交通权重], 0)</pre>
+<p><code>NULLIF(x, 0)</code> 防止三个权重全为 0 时除零。权重会先除以权重之和，所以三个滑块不必凑成 100。</p>
+<h3>Step 4 · 组件 ① 得分地图</h3>
+<table><thead><tr><th>位置</th><th>设置</th></tr></thead><tbody>
+<tr><td>出图</td><td>双击 <code>经度</code> + <code>纬度</code>（方式 A 是 <code>Latitude</code>/<code>Longitude</code>）</td></tr>
+<tr><td>粒度</td><td><code>小区</code> → 拖到「标记 → 详细信息」</td></tr>
+<tr><td>标记</td><td>圆</td></tr>
+<tr><td>颜色</td><td><code>[综合得分]</code> → 顺序色</td></tr>
+<tr><td>大小</td><td><code>[挂牌数]</code></td></tr>
+<tr><td>筛选器</td><td><code>区</code> → 显示筛选器 → 改成<b>单选</b></td></tr>
+</tbody></table>
+<p>还原原型的「越高越红」色阶：右键 <code>[综合得分]</code> → 编辑颜色 → 自定义 6 档：<code>#2a5c8a → #4fa3d1 → #63c6c9 → #f2c14e → #ef7a4a → #c62828</code></p>
+<h3>Step 5 · 组件 ② 推荐排名表</h3>
+<table><thead><tr><th>位置</th><th>设置</th></tr></thead><tbody>
+<tr><td><b>行</b></td><td><code>小区</code></td></tr>
+<tr><td><b>文本</b></td><td><code>[综合得分]</code>、<code>中位单价</code>、<code>挂牌数</code>、<code>[教育分]</code>、<code>[医疗分]</code>、<code>[交通分]</code></td></tr>
+<tr><td><b>排序</b></td><td>按 <code>[综合得分]</code> <b>降序</b></td></tr>
+<tr><td><b>排名序号</b></td><td>新建 <code>[排名] = INDEX()</code>，放第一列</td></tr>
+<tr><td><b>筛选器</b></td><td><code>区</code>（与地图共用同一个筛选器，实现联动）</td></tr>
+</tbody></table>
+<h3>Step 6 · 组件 ③ 房源明细（点击排名行 → 展开）</h3>
+<table><thead><tr><th>位置</th><th>设置</th></tr></thead><tbody>
+<tr><td>数据源</td><td><code>v3/01_房源子集_旧表小区.csv</code>（35,569 行）</td></tr>
+<tr><td>列</td><td><code>面积</code> / <code>价格</code> / <code>单价</code> / <code>朝向</code> / <code>装修</code></td></tr>
+<tr><td>筛选器</td><td><code>区</code>（与主表联动）</td></tr>
+<tr><td><b>动作</b></td><td>仪表板 → 动作 → 添加动作 → <b>筛选器</b>&lt;br&gt;源 = 得分地图 / 排名表&lt;br&gt;目标 = 房源明细&lt;br&gt;运行方式 = <b>选择</b>&lt;br&gt;字段 = <code>小区</code></td></tr>
+</tbody></table>
+<div class="warn"><b>V3 明细表没有 <code>户型</code></b>&lt;br&gt;<code>v3/01_房源子集_旧表小区.csv</code> 不含 <code>户型</code> 字段（那是后来才补到 v2 的）。两个选择：&lt;br&gt;· <b>选择 1（简单）</b>：明细表不显示户型&lt;br&gt;· <b>选择 2（完整）</b>：与 v2 关联取户型&lt;br&gt;　关联字段：<code>区 + 街道 + 小区 + 面积 + 价格</code>（五字段复合关联）&lt;br&gt;　必须带上 <code>面积 + 价格</code>，因为同一小区有多条房源</div>
+</div>
+<div class="sec" id="s6"><h2>§6 数据验证证据（我做的核对记录）</h2>
+<p>以下每一项都是我<b>在你的实际文件上跑出来的</b>，不是估计值。如果有人质疑数据可靠性，这一节可以直接拿出来。</p>
+<h3>6.1 两个 archive 是否一致</h3>
+<table><thead><tr><th>文件</th><th>archive (2) md5</th><th>archive (4) md5</th><th>结论</th></tr></thead><tbody>
+<tr><td><code>house_price_raw.csv</code></td><td><code>7b9cd205…709d</code></td><td><code>7b9cd205…709d</code></td><td>✅ 完全一致</td></tr>
+<tr><td><code>dataset.csv</code></td><td><code>25f843ed…ea38</code></td><td><code>25f843ed…ea38</code></td><td>✅ 完全一致</td></tr>
+</tbody></table>
+<h3>6.2 v2 是否真的来自 raw</h3>
+<table><thead><tr><th>检查项</th><th>结果</th></tr></thead><tbody>
+<tr><td>v2 每一行能否在 raw 找到对应（按 区+街道+小区+面积+价格 多重集）</td><td>✅ <b>171,344 / 171,344（100%）</b></td></tr>
+<tr><td>属性元组一致性（朝向/装修/楼层位置/产权性质/物业类型）</td><td>✅ <b>171,344 / 171,344</b></td></tr>
+<tr><td>区 / 街道 / 小区 / 楼层位置 取值是否 ⊆ raw</td><td>✅ 无多出</td></tr>
+<tr><td>行数差 889 的来源</td><td>✅ 全部有解释（物业类型 711 条 + 单价越界 159 条 + 其他）</td></tr>
+</tbody></table>
+<p><b>被剔除的 889 行长什么样</b>（物业类型分布）：新里洋房 378 · 其他 169 · 普通住宅 158 · 老公房 93 · 暂无 35 · 平房 31 · 别墅 14 · 公寓 5 · 商住楼 1</p>
+<h3>6.3 v3 是否真的是 v2 的子集</h3>
+<table><thead><tr><th>检查项</th><th>结果</th></tr></thead><tbody>
+<tr><td>v3 小区 ⊆ v2 小区</td><td>✅ 1,467 / 1,467</td></tr>
+<tr><td>逐小区房源条数</td><td>✅ <b>1,467 / 1,467 完全一致</b></td></tr>
+<tr><td>v3 总条数 = 这些小区在 v2 的条数</td><td>✅ 35,569 = 35,569</td></tr>
+<tr><td>属性多重集包含</td><td>✅ 无缺失</td></tr>
+<tr><td>结论</td><td>✅ <b>v3 = v2 按小区过滤，房源全部保留，无二次抽样</b></td></tr>
+</tbody></table>
+<h3>6.4 聚合表是否与明细一致</h3>
+<table><thead><tr><th>表</th><th>粒度</th><th>校验</th></tr></thead><tbody>
+<tr><td><code>v2/02_小区级.csv</code></td><td>区 + 街道 + 小区（13,860）</td><td>✅ 挂牌数 100% 一致</td></tr>
+<tr><td><code>v2/03_区级.csv</code></td><td>区（16）</td><td>✅ 房源数、中位单价 100% 一致</td></tr>
+<tr><td><code>v3/02小区总表.csv</code></td><td>区 + 小区（1,467）</td><td>✅ 挂牌数 100% 一致</td></tr>
+<tr><td><code>tableau_ready/08_…csv</code></td><td>区 + 小区（1,467）</td><td>✅ 坐标与指标与 v3/02 一致率 100%</td></tr>
+</tbody></table>
+<div class="warn"><b>两个小区表粒度不同，join 时注意</b>&lt;br&gt;· <code>v2/02_小区级.csv</code> 用 <b>区 + 街道 + 小区</b> = 13,860 行（同名小区跨街道算两个实体）&lt;br&gt;· <code>v3/02小区总表.csv</code> 用 <b>区 + 小区</b> = 1,467 行&lt;br&gt;<b>不要直接用 (区,小区) 跨表 join</b>，会一对多。建议分别使用（V2 表画 V2 的图，V3 表画 V3 的图）。</div>
+<h3>6.5 经纬度是否与 v3 同源</h3>
+<p>拿 v2 和 v3 共有的 1,467 个小区比对：<b>经度差中位 0.000000°、最大 0.000000°、完全一致占比 100.0%</b> —— 证明两边的坐标来自同一次 geocode，没有二次加工。</p>
+</div>
+<div class="sec" id="s7"><h2>§7 常见坑速查</h2>
+<h3>1. 地图坐标胶囊是蓝色（离散）</h3>
+<p>现象：拖 <code>网格经度</code> 到列后出现几百个列标题。<b>解决</b>：右键胶囊 → <b>连续</b>（变绿色）。</p>
+<h3>2. 双击经纬度后地图只有 1 个点</h3>
+<p>现象：地图上一个孤零零的点。原因：架子上是 <code>AVG(经度)</code>，对整张表求平均。<b>解决</b>：把 <code>小区</code> 拖到「详细信息」。</p>
+<h3>3. 用 Join 关联年鉴导致散点错误</h3>
+<p>现象：区级散点的气泡被房源数放大。<b>解决</b>：用<b>关系（Relationship）</b>，或直接用 <code>03_区级.csv</code> 单表。</p>
+<h3>4. 双轴图勾了「同步轴」</h3>
+<p>现象：户型的单价线被压成一条直线。<b>解决</b>：取消「同步轴」。</p>
+<h3>5. D3 的 LOD 写成 <code>FIXED [区],[小区]</code></h3>
+<p>现象：得分地图全一个颜色、每个小区都是 50 分。<b>解决</b>：必须是 <code>FIXED [区]</code>。</p>
+<h3>6. D3 用了房源级表</h3>
+<p>现象：排名表里同一个小区出现几十行。<b>解决</b>：换成 <code>v3/02小区总表</code>（1,467 行）。</p>
+<h3>7. 箱形图须线不是 P95</h3>
+<p>Tableau 内置是 1.5×IQR，原型是 P5/P95。<b>解决</b>：接受差异并注明，或用 <code>06_箱形图分位.csv</code>。</p>
+<h3>8. Spearman vs Pearson</h3>
+<p>Tableau 内置 <code>CORR()</code> 是 Pearson。<b>解决</b>：用 <code>04_相关系数表.csv</code>，或按 §8.1 自己算。</p>
+<h3>9. 文本字段排序错乱</h3>
+<p><code>房龄段</code>、<code>面积段</code> 默认按拼音排。<b>解决</b>：建数值排序字段。</p>
+<h3>10. 17 万行导致卡顿</h3>
+<p><b>解决</b>：① 创建 .hyper 提取 ② 地图先加筛选器 ③ 用小区级表画地图。</p>
+</div>
+<div class="sec" id="s8"><h2>§8 附：需要自己算的三段 Python（已在你的数据上跑通）</h2>
+<h3>8.1 Spearman 相关系数（8 个指标）</h3>
+<pre>import pandas as pd
+d = pd.read_csv(&#x27;v2/01_房源级.csv&#x27;, low_memory=False)
+Y = pd.read_csv(&#x27;v2/03_区级.csv&#x27;, low_memory=False)
+
+KEEP = [&#x27;地均预算收入_万元每平方公里&#x27;,&#x27;人均绿地_平方米&#x27;,&#x27;人口密度_人每平方公里&#x27;,
+        &#x27;每万人中学在校生_人&#x27;,&#x27;每万人卫生技术人员_人&#x27;,&#x27;人均居住房屋_平方米&#x27;,
+        &#x27;卫生机构_个&#x27;,&#x27;普通中学_所&#x27;]
+
+g = d.groupby(&#x27;区&#x27;).agg(中位单价=(&#x27;单价_元每平&#x27;,&#x27;median&#x27;),
+                        p25=(&#x27;单价_元每平&#x27;, lambda s: s.quantile(.25)),
+                        p75=(&#x27;单价_元每平&#x27;, lambda s: s.quantile(.75))).reset_index()
+g[&#x27;区内分化&#x27;] = (g[&#x27;p75&#x27;] - g[&#x27;p25&#x27;]) / g[&#x27;中位单价&#x27;] * 100
+g = g.merge(Y[[&#x27;区&#x27;] + KEEP], on=&#x27;区&#x27;)
+
+out = []
+for c in KEEP:
+    r = g[[&#x27;中位单价&#x27;, c]].dropna()
+    out.append({&#x27;指标&#x27;: c, &#x27;ρ_vs_房价&#x27;: round(r[&#x27;中位单价&#x27;].corr(r[c], method=&#x27;spearman&#x27;), 3)})
+print(pd.DataFrame(out).sort_values(&#x27;ρ_vs_房价&#x27;, key=abs, ascending=False))</pre>
+<p><b>实测输出</b>：地均预算收入 <b>0.976</b> · 人均绿地 <b>−0.924</b> · 人口密度 <b>0.918</b> · 每万人中学在校生 0.847 · 人均居住房屋 0.721 · 每万人卫生技术人员 0.715 · 普通中学_所 −0.121 · 卫生机构_个 0.000</p>
+<h3>8.2 区内分化（16 个区）</h3>
+<pre>import pandas as pd
+d = pd.read_csv(&#x27;v2/01_房源级.csv&#x27;, low_memory=False)
+g = d.groupby(&#x27;区&#x27;)[&#x27;单价_元每平&#x27;].agg(
+        P25=lambda s: s.quantile(.25), P50=&#x27;median&#x27;,
+        P75=lambda s: s.quantile(.75), 房源数=&#x27;size&#x27;).reset_index()
+g[&#x27;区内分化&#x27;] = ((g[&#x27;P75&#x27;] - g[&#x27;P25&#x27;]) / g[&#x27;P50&#x27;] * 100).round(2)
+g.to_csv(&#x27;区内分化.csv&#x27;, index=False, encoding=&#x27;utf-8-sig&#x27;)</pre>
+<p><b>实测输出</b>（可直接对照验证）：崇明 <b>82.67</b> · 浦东 59.99 · 青浦 56.22 · 松江 53.87 · 闵行 51.26 · 静安 50.72 · 奉贤 49.32 · 嘉定 49.17 · 金山 47.47 · 长宁 47.03 · 虹口 46.88 · 杨浦 43.77 · 宝山 43.37 · 徐汇 41.36 · 普陀 40.67 · 黄浦 38.62</p>
+<div class="tip"><b>一个值得写的发现</b>：崇明的区内分化 <b>82.67</b> 是全市最高，第二名浦东只有 59.99。崇明房价的内部差距远大于其他区 —— 在 D2 的 ⑥ 图上是明显的离群点。</div>
+<h3>8.3 箱形图分位（P95 须线）</h3>
+<pre>import pandas as pd
+d = pd.read_csv(&#x27;v2/01_房源级.csv&#x27;, low_memory=False)
+b = d.groupby(&#x27;区&#x27;)[&#x27;单价_元每平&#x27;].agg(
+        P05=lambda s: s.quantile(.05), P25=lambda s: s.quantile(.25), P50=&#x27;median&#x27;,
+        P75=lambda s: s.quantile(.75), P95=lambda s: s.quantile(.95), 样本量=&#x27;size&#x27;).reset_index()
+b[&#x27;箱体下沿&#x27;] = b[&#x27;P25&#x27;]
+b[&#x27;箱体高度&#x27;] = b[&#x27;P75&#x27;] - b[&#x27;P25&#x27;]
+b.to_csv(&#x27;箱形图分位.csv&#x27;, index=False, encoding=&#x27;utf-8-sig&#x27;)</pre>
+</div>
+<div class="sec" id="s9"><h2>§9 交付清单</h2>
+<h3>9.1 打包与发布</h3>
+<pre>文件 → 导出为打包工作簿（.twbx）   ← 含提取数据，别人打开就能看
+服务器 → Tableau Public → 保存      ← 拿到在线链接（公开挂牌数据，无隐私问题）</pre>
+<h3>9.2 报告里建议写的技术说明</h3>
+<table><thead><tr><th>页</th><th>说明</th></tr></thead><tbody>
+<tr><td><b>数据</b></td><td>安居客上海二手房挂牌数据（抓取时间 2024-07-15），207 万→17.1 万条，坐标 100% 完整</td></tr>
+<tr><td><b>D1</b></td><td>网格 1.5km 聚合，经度按 31.2°N 余弦修正（0.015753° / 0.013562°）；热力图颜色为中位单价，非挂牌量</td></tr>
+<tr><td><b>D2</b></td><td>相关系数为 Spearman ρ（n=16）；经 Bonferroni 校正，|ρ| &lt; 0.5 的指标不作为结论</td></tr>
+<tr><td><b>D3</b></td><td>区内 min-max 归一化 + 权重加权平均；三个权重先除以权重之和</td></tr>
+</tbody></table>
+<h3>9.3 提交要求</h3>
+<p>作业要求单个 zip，内含一个 <code>index.html</code> 起始页，链接到小组报告、个人报告、README、在线 dashboard 链接。</p>
+<h3>附 · 数据源分工一览</h3>
+<table><thead><tr><th>页面</th><th>用哪个</th><th>为什么</th></tr></thead><tbody>
+<tr><td><b>D1 总体预览</b></td><td>🟦 <code>v2/01_房源级.csv</code></td><td>v2 覆盖完整（16 区全覆盖、13,387 小区），无选择性偏差。v3 只有 1,467 个小区且<b>崇明为 0</b></td></tr>
+<tr><td><b>D2 年鉴散点</b></td><td>🟦 <code>v2/03_区级.csv</code></td><td>区级描述必须用无偏数据。v3 的中位单价与 v2 <b>差 16.3%</b>，是选择偏差，不能混用</td></tr>
+<tr><td><b>D3 加权推荐</b></td><td>🟧 <code>v3/02小区总表</code></td><td><b>只有 v3 有 500m 设施数据</b>（学校/医院/步行时间）。v2 完全没有，帮不上忙</td></tr>
+</tbody></table>
+</div>
+<div class="ft">
+本指引与 <code>Tableau构建指引.md</code> 内容同源（同一份结构化内容渲染成两种格式）。<br>
+原型页在 <code>dashboard/</code>；预计算表在 <code>tableau_ready/</code>；清洗数据在 <code>v2/</code>。<br>
+统计口径：D2 的 Spearman ρ 基于 16 个区；经 Bonferroni 校正（α=0.05/38，临界 |ρ|≈0.79），|ρ|&lt;0.5 的指标不可单独作为发现。<br>
+<b>相关不等于因果</b>：地均预算收入与房价 +0.976 反映的是「区域财政能力与地价水平共生」，不能解读为「提高预算收入会推高房价」。
+</div><div class="zoom" id="zoom"></div><script>document.querySelectorAll('.hero img').forEach(function(im){
+  im.onclick=function(){var z=document.getElementById('zoom');
+    z.innerHTML='<img src="'+im.src+'">'; z.style.display='block';};});
+document.getElementById('zoom').onclick=function(){this.style.display='none';};
+document.addEventListener('keydown',function(e){if(e.key==='Escape')
+  document.getElementById('zoom').style.display='none';});</script></body></html>
