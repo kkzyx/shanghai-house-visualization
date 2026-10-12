@@ -52,6 +52,10 @@ code{background:#12253a;color:#7fd6ff;padding:1px 6px;border-radius:4px;font-siz
   <h1>上海二手房价格模式与小区推荐<br>可视化分析</h1>
   <div class="sub">基于安居客挂牌数据、2024 上海统计年鉴与高德 POI 设施数据，
   构建三个交互式仪表板：<b>空间分布总览</b> · <b>房价与城市指标关系</b> · <b>多准则小区推荐</b>。</div>
+  <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
+    <a href="https://github.com/kkzyx/shanghai-house-visualization/releases/download/data-v2-v3/shanghai_house_dataset_v2_v3.zip" style="display:inline-block;background:#1b5c8a;color:#fff;padding:11px 26px;border-radius:8px;font-size:14px;font-weight:600;border:1px solid #3d9fe0">⬇ 下载数据集（17.7 MB）</a>
+    <a href="#dashboards" style="display:inline-block;background:transparent;color:#5fd3ff;padding:11px 26px;border-radius:8px;font-size:14px;font-weight:600;border:1px solid #2a5b85">查看三个 Dashboard 原型 →</a>
+  </div>
   <div class="meta">
     <span><b>数据规模</b>　171,344 条挂牌 · 13,387 个小区 · 16 个区</span>
     <span><b>数据来源</b>　安居客 + 统计年鉴 + 高德</span>
@@ -61,7 +65,7 @@ code{background:#12253a;color:#7fd6ff;padding:1px 6px;border-radius:4px;font-siz
 
 <div class="wrap">
 
-<h2>一、三个 Dashboard 原型</h2>
+<h2 id="dashboards">一、三个 Dashboard 原型</h2>
 <p style="font-size:13.5px;color:#a8c4dc">以下为 <b>交互式设计原型</b>（HTML 实现，可直接点击体验）。
 最终交付的 Tableau 仪表板请在文末「报告与在线链接」处查看。</p>
 
@@ -119,11 +123,26 @@ HTML 原型与 Tableau 实现的差异（箱形图须线定义、相关系数类
 <h2>三、数据文件</h2>
 <table>
 <tr><th style="width:22%">路径</th><th style="width:24%">内容</th><th style="width:28%">规模</th><th>用途</th></tr>
-<tr><td><code>`dataset/v2/`</code></td><td>我清洗的安居客全量</td><td>3 张表（48 / 55 / 50 列）+ README + 字段字典</td><td>D1、D2 的价格来源</td></tr>
-<tr><td><code>`dataset/v3/`</code></td><td>你的交集版（含 500m 设施）</td><td>3 张表（54 / 50 / 41 列）</td><td>D3 的打分与明细</td></tr>
+<tr><td><code>`dataset/v2/`</code></td><td>我清洗的安居客全量</td><td>3 张表（48 / 55 / 50 列）+ README + 字段字典</td><td>D1、D2 的价格来源　<b style="color:#8fc6ee">（完整版见下载包）</b></td></tr>
+<tr><td><code>`dataset/v3/`</code></td><td>你的交集版（含 500m 设施）</td><td>3 张表（54 / 50 / 41 列）</td><td>D3 的打分与明细　<b style="color:#8fc6ee">（完整版见下载包）</b></td></tr>
 <tr><td><code>`dataset/tableau_ready/`</code></td><td>预计算辅助表</td><td>5 张 CSV + README + 2 张图解</td><td>**方式 B** —— 省去 Tableau 里的复杂公式</td></tr>
 <tr><td><code>`guide/`</code></td><td>Tableau 构建指引</td><td>`Tableau构建指引.md` + `.html`</td><td>含字段溯源、两种使用方式、逐图步骤</td></tr>
 </table>
+
+<h3 style="font-size:15px;color:#e8f4ff;font-weight:600;margin:22px 0 10px">📦 完整数据集下载</h3>
+<a href="https://github.com/kkzyx/shanghai-house-visualization/releases/download/data-v2-v3/shanghai_house_dataset_v2_v3.zip" style="display:block;background:linear-gradient(120deg,#1b5c8a,#2472a8);border:1px solid #3d9fe0;border-radius:11px;padding:20px 24px;text-decoration:none;transition:.2s" onmouseover="this.style.opacity=.9" onmouseout="this.style.opacity=1">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:17px;color:#fff;font-weight:700;margin-bottom:6px">shanghai_house_dataset_v2_v3.zip</div>
+      <div style="font-size:13px;color:#cfe9ff">解压后 <b>98.2 MB</b> · 压缩包 <b>17.7 MB</b> · 22 个文件<br>
+      含 <b>171,344 条房源明细</b>（v2/01_房源级.csv，78 MB）+ v3 全表 + 5 张 Tableau 预计算表 + 构建指引 + 说明.txt</div>
+    </div>
+    <div style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:12px 26px;color:#fff;font-size:15px;font-weight:700;white-space:nowrap">⬇ 点击下载</div>
+  </div>
+</a>
+<p style="font-size:12.5px;color:#6b8dab;margin-top:9px">
+托管在 GitHub Releases（单文件上限 2 GB，永久链接）·
+<a href="https://github.com/kkzyx/shanghai-house-visualization/releases/tag/data-v2-v3" style="color:#5fd3ff">查看 Release 页面</a> · 也可以克隆整个仓库后单独取用</p>
 
 <div class="warn"><b>本仓库只放了体积较小的文件（11.6 MB）</b><br>
 三个 Dashboard 原型、Tableau 构建指引、5 张预计算表都在仓库里，可直接在线打开。
@@ -136,6 +155,9 @@ HTML 原型与 Tableau 实现的差异（箱形图须线定义、相关系数类
 
 <h2>四、相关链接与报告</h2>
 <div class="links">
+  <a class="link" href="https://github.com/kkzyx/shanghai-house-visualization/releases/download/data-v2-v3/shanghai_house_dataset_v2_v3.zip">
+    <div><div class="t">⬇ 下载完整数据集（zip）</div>
+    <div class="d">98.2 MB 原始数据 · 压缩后 17.7 MB</div></div><span style="color:#5fd3ff">下载 →</span></a>
   <a class="link" href="dataset/tableau_ready/README.md">
     <div><div class="t">预计算表说明（README）</div>
     <div class="d">5 张 Tableau 辅助表的字段与用途</div></div><span style="color:#5fd3ff">打开 →</span></a>
